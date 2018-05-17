@@ -36,8 +36,8 @@ class App extends Component {
 
     let session = neo4j
       .driver(
-        "bolt:///206.189.238.65/:7687",
-        neo4j.auth.basic("reviews", "letmein")
+        "bolt://206.189.238.65:7687",
+        neo4j.auth.basic("reviews", "letmein"), {encrypted: true, trust: "TRUST_ALL_CERTIFICATES"}
       )
       .session();
 
