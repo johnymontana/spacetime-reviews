@@ -66,6 +66,7 @@ class Map extends Component {
             {...this.state.viewport}
             width={width}
             height={500}
+            mapboxApiAccessToken="pk.eyJ1IjoibHlvbndqIiwiYSI6IndwUXlLUjQifQ.DIiytYUASOcXjKdpXW8S-Q"
             onViewportChange={this.viewportChange}
           >
             {this.props.businesses.map(b => {
