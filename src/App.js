@@ -32,10 +32,10 @@ class App extends Component {
     };
 
     this.driver = neo4j.driver(
-      "bolt://localhost:7687",
-      neo4j.auth.basic("neo4j", "letmein")
-      //"bolt://206.189.238.65:7687",
-      //neo4j.auth.basic("reviews", "letmein"), {encrypted: true, trust: "TRUST_ALL_CERTIFICATES"}
+      //"bolt://localhost:7687",
+      //neo4j.auth.basic("neo4j", "letmein")
+      "bolt://reviews.lyonwj.com:17687",
+      neo4j.auth.basic("reviews", "letmein"), {encrypted: true}
     );
     this.fetchBusinesses();
     this.fetchCategories();
