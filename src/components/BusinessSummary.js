@@ -7,7 +7,7 @@ class BusinessSummary extends Component {
     return (
       <ResponsiveBar
         width={800}
-        height={200}
+        height={400}
         data={this.props.starsData}
         keys={["count"]}
         indexBy="stars"
