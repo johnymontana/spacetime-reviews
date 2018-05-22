@@ -7,8 +7,8 @@ import { AutoSizer } from "react-virtualized";
 class Map extends Component {
   state = {
     viewport: {
-      width: window.innerWidth - 240,
-      height: window.innerHeight - 240,
+      // width: window.innerWidth - 240,
+      // height: window.innerHeight - 240,
       latitude: this.props.mapCenter.latitude,
       longitude: this.props.mapCenter.longitude,
       zoom: this.props.mapCenter.zoom
@@ -65,7 +65,7 @@ class Map extends Component {
           <ReactMapGL
             {...this.state.viewport}
             width={width}
-            height={height}
+            height={500}
             onViewportChange={this.viewportChange}
           >
             {this.props.businesses.map(b => {
@@ -75,6 +75,7 @@ class Map extends Component {
                   longitude={b.location.x}
                   offsetLeft={-20}
                   offsetTop={-10}
+                  key={b.id}
                 >
                   <BusinessPin
                     size={20}

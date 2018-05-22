@@ -1,13 +1,13 @@
 import React, { Component } from "react";
-import logo from "./logo.svg";
 import "./App.css";
 import { Grid, Cell } from "styled-css-grid";
-import Map from "./Map";
-import ReviewSummary from "./ReviewSummary";
-import BusinessSummary from "./BusinessSummary";
+import Map from "./components/Map";
+import ReviewSummary from "./components/ReviewSummary";
+import BusinessSummary from "./components/BusinessSummary";
+import CategorySummary from "./components/CategorySummary";
 import { DateRangePicker } from "react-dates";
-import { START_DATE } from "react-dates/constants";
 import neo4j from "neo4j-driver/lib/browser/neo4j-web";
+import { Date } from "neo4j-driver/lib/v1/temporal-types";
 import moment from "moment";
 
 class App extends Component {
@@ -20,7 +20,9 @@ class App extends Component {
       startDate: moment("2014-01-01"),
       endDate: moment("2018-01-01"),
       businesses: [],
-      reviews: [],
+      starsData: [],
+      reviews: [{ day: "2018-01-01", value: 10 }],
+      categoryData: [],
       selectedBusiness: false,
       mapCenter: {
         latitude: 33.33,
@@ -29,68 +31,45 @@ class App extends Component {
       }
     };
 
-    // FIXME: convert all methods to arrow funcs
-    this.onDatesChange = this.onDatesChange.bind(this);
-    this.onFocusChange = this.onFocusChange.bind(this);
-    this.businessSelected = this.businessSelected.bind(this);
-
-    let session = neo4j
-      .driver(
-        "bolt://206.189.238.65:7687",
-        neo4j.auth.basic("reviews", "letmein"), {encrypted: true, trust: "TRUST_ALL_CERTIFICATES"}
-      )
-      .session();
-
-    this.session = session;
-    // Get businesses within range of center of map
-    // TODO: draw circle on map
-    // TODO: scale distance based on current map zoom
-    session
-      .run(
-        `
-      MATCH (b:Business) 
-      WHERE distance(b.location, point({latitude: $lat, longitude: $lon})) < 10000 * ( 1.0 / $zoom )
-      RETURN b LIMIT 100`,
-        {
-          lat: this.state.mapCenter.latitude,
-          lon: this.state.mapCenter.longitude,
-          zoom: this.state.mapCenter.zoom
-        }
-      )
-      .then(result => {
-        let businesses = result.records.map(record => {
-          return record.get("b").properties;
-        });
-        this.setState({
-          businesses
-        });
-      })
-      .catch(e => {
-        // TODO: handle errors.
-        console.log(e);
-      });
-  }
-
-  onDatesChange({ startDate, endDate }) {
-    const { stateDateWrapper } = this.props;
-    this.setState({
-      startDate: startDate,
-      endDate: endDate
-    });
+    this.driver = neo4j.driver(
+      "bolt://localhost:7687",
+      neo4j.auth.basic("neo4j", "letmein")
+      //"bolt://206.189.238.65:7687",
+      //neo4j.auth.basic("reviews", "letmein"), {encrypted: true, trust: "TRUST_ALL_CERTIFICATES"}
+    );
+    this.fetchBusinesses();
+    this.fetchCategories();
     this.fetchReviews();
   }
 
-  onFocusChange(focusedInput) {
-    this.setState({ focusedInput });
-  }
+  onDatesChange = ({ startDate, endDate }) => {
+    if (startDate && endDate) {
+      this.setState(
+        {
+          startDate,
+          endDate
+        },
+        () => {
+          this.fetchBusinesses();
+          this.fetchReviews();
+          this.fetchCategories();
+        }
+      );
+    } else {
+      this.setState({
+        startDate,
+        endDate
+      });
+    }
+  };
 
-  businessSelected(b) {
+  onFocusChange = focusedInput => this.setState({ focusedInput });
+
+  businessSelected = b => {
     this.setState({
-      selectedBusiness: b,
-      startDate: moment("2014-01-01"),
-      endDate: moment("2018-01-01")
+      selectedBusiness: b
     });
-  }
+  };
 
   mapCenterChange = viewport => {
     this.setState({
@@ -102,169 +81,219 @@ class App extends Component {
     });
   };
 
-  fetchReviews = () => {
-    this.session
+  fetchCategories = () => {
+    const { mapCenter, startDate, endDate } = this.state;
+    const session = this.driver.session();
+
+    session
+      .run(
+        `MATCH (b:Business)<-[:REVIEWS]-(r:Review)
+        WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < 10000 * (2/$zoom)
+        WITH r,b LIMIT 1000
+        WITH DISTINCT b
+    OPTIONAL MATCH (b)-[:IN_CATEGORY]->(c:Category)
+    WITH c.name AS cat, COUNT(b) AS num ORDER BY num DESC LIMIT 25
+    RETURN COLLECT({id: cat, label: cat, value: toFloat(num)}) AS categoryData
+    `,
+        {
+          lat: mapCenter.latitude,
+          lon: mapCenter.longitude,
+          zoom: mapCenter.zoom,
+          start: new Date(
+            startDate.year(),
+            startDate.month() + 1,
+            startDate.date()
+          ),
+          end: new Date(endDate.year(), endDate.month() + 1, endDate.date())
+        }
+      )
+      .then(result => {
+        const categoryData = result.records[0].get("categoryData");
+        console.log(categoryData);
+        this.setState({
+          categoryData
+        });
+        session.close();
+      })
+      .catch(e => {
+        console.log(e);
+        session.close();
+      });
+  };
+
+  fetchBusinesses = () => {
+    // Get businesses within range of center of map
+    // TODO: draw circle on map
+    // TODO: scale distance based on current map zoom
+
+    const { mapCenter, startDate, endDate } = this.state;
+    const session = this.driver.session();
+    session
       .run(
         `
-    MATCH (b:Business {id: $businessId})<-[:REVIEWS]-(r:Review)
-    WHERE datetime($startDate) < r.date < datetime($endDate)
-    RETURN r ORDER BY r.date LIMIT 10 `,
+        MATCH (b:Business)<-[:REVIEWS]-(r:Review)
+        WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < 10000 * (2/$zoom)
+        WITH r,b LIMIT 1000
+        OPTIONAL MATCH (b)-[:IN_CATEGORY]->(c:Category)
+        WITH r,b, COLLECT(c.name) AS categories
+        WITH COLLECT(DISTINCT b {.*, categories}) AS businesses, COLLECT(DISTINCT r) AS reviews
+        UNWIND reviews AS r
+        WITH businesses, r.stars AS stars, COUNT(r) AS num ORDER BY stars
+        WITH businesses, COLLECT({stars: toString(stars), count:toFloat(num)}) AS starsData
+        RETURN businesses, starsData`,
         {
-          businessId: this.state.selectedBusiness.id,
-          startDate: this.state.startDate.format("YYYY-MM-DD"),
-          endDate: this.state.endDate.format("YYYY-MM-DD")
+          lat: mapCenter.latitude,
+          lon: mapCenter.longitude,
+          zoom: mapCenter.zoom,
+          start: new Date(
+            startDate.year(),
+            startDate.month() + 1,
+            startDate.date()
+          ),
+          end: new Date(endDate.year(), endDate.month() + 1, endDate.date())
+        }
+      )
+      .then(result => {
+        const record = result.records[0];
+        const businesses = record.get("businesses");
+        const starsData = record.get("starsData");
+
+        this.setState({
+          businesses,
+          starsData
+        });
+        session.close();
+      })
+      .catch(e => {
+        // TODO: handle errors.
+        console.log(e);
+        session.close();
+      });
+  };
+
+  fetchReviews = () => {
+    const { startDate, endDate, mapCenter } = this.state;
+
+    const session = this.driver.session();
+
+    session
+      .run(
+        `
+          MATCH (b:Business)<-[:REVIEWS]-(r:Review)
+          WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < 10000 * (2/$zoom)
+          WITH r,b LIMIT 1000
+          WITH r
+          WITH r.date as date, COUNT(*) AS num ORDER BY date
+           WITH date.year + "-" + date.month + "-" + date.day AS reviewDate, num
+          RETURN COLLECT({day: reviewDate, value: toFloat(num)}) AS reviewData
+          
+        
+          `,
+        {
+          lat: mapCenter.latitude,
+          lon: mapCenter.longitude,
+          zoom: mapCenter.zoom,
+          start: new Date(
+            startDate.year(),
+            startDate.month() + 1,
+            startDate.date()
+          ),
+          end: new Date(endDate.year(), endDate.month() + 1, endDate.date())
         }
       )
       .then(result => {
         console.log("got some reviews");
-        let reviews = result.records.map(record => {
-          return record.get("r").properties;
-        });
+        console.log(result);
+        let reviews = result.records[0].get("reviewData");
         console.log(reviews);
 
-        if (reviews.length > 0) {
-          this.setState({
-            reviews,
-            startDate: moment(reviews[0].date.toString()),
-            endDate: moment(reviews[reviews.length - 1].date.toString())
-          });
-        } else {
-          this.setState({
-            reviews: []
-          });
-        }
+        this.setState({
+          reviews
+        });
+
+        session.close();
       })
       .catch(e => {
         console.log(e);
+        session.close();
       });
   };
 
-  componentDidUpdate() {}
-
-  componentWillUpdate(nextProps, nextState) {
+  componentDidUpdate = (prevProps, prevState) => {
     if (
-      this.state.mapCenter.latitude !== nextState.mapCenter.latitude ||
-      this.state.mapCenter.longitude !== nextState.mapCenter.longitude
+      this.state.mapCenter.latitude !== prevState.mapCenter.latitude ||
+      this.state.mapCenter.longitude !== prevState.mapCenter.longitude
     ) {
-      // Get businesses within range of center of map
-      // TODO: draw circle on map
-      // TODO: scale distance based on current map zoom
-      this.session
-        .run(
-          `
-      MATCH (b:Business) 
-      WHERE distance(b.location, point({latitude: $lat, longitude: $lon})) < 1000
-      RETURN b LIMIT 100`,
-          {
-            lat: this.state.mapCenter.latitude,
-            lon: this.state.mapCenter.longitude
-          }
-        )
-        .then(result => {
-          let businesses = result.records.map(record => {
-            return record.get("b").properties;
-          });
-          this.setState({
-            businesses
-          });
-        })
-        .catch(e => {
-          // TODO: handle errors.
-          console.log(e);
-        });
+      this.fetchBusinesses();
+      this.fetchCategories();
+      this.fetchReviews();
     }
-    //|| (this.state.startDate.toString() !== nextState.startDate.toString()) || (this.state.endDate.toString() !== nextState.endDate.toString())
     if (
-      nextState.selectedBusiness &&
-      (!this.state.selectedBusiness ||
-        this.state.selectedBusiness.id !== nextState.selectedBusiness.id ||
+      this.state.selectedBusiness &&
+      (!prevState.selectedBusiness ||
+        this.state.selectedBusiness.id !== prevState.selectedBusiness.id ||
         false ||
         false)
     ) {
-      console.log(this.state);
-      console.log(nextState);
-      this.session
-        .run(
-          `
-        MATCH (b:Business {id: $businessId})<-[:REVIEWS]-(r:Review)
-        WHERE datetime($startDate) < r.date < datetime($endDate)
-        RETURN r ORDER BY r.date LIMIT 10 `,
-          {
-            businessId: nextState.selectedBusiness.id,
-            startDate: nextState.startDate.format("YYYY-MM-DD"),
-            endDate: nextState.endDate.format("YYYY-MM-DD")
-          }
-        )
-        .then(result => {
-          console.log("got some reviews");
-          let reviews = result.records.map(record => {
-            return record.get("r").properties;
-          });
-          console.log(reviews);
-
-          if (reviews.length > 0) {
-            this.setState({
-              reviews,
-              startDate: moment(reviews[0].date.toString()),
-              endDate: moment(reviews[reviews.length - 1].date.toString())
-            });
-          } else {
-            this.setState({
-              reviews: []
-            });
-          }
-        })
-        .catch(e => {
-          console.log(e);
-        });
+      // business is selected
+      // TODO: fetch related businesses
     }
-  }
+  };
 
   render() {
     return (
-      <Grid
-        columns={"1fr 100px"}
-        rows={"1fr 100px"}
-        areas={[
-          "header  header",
-          "content ads",
-          "content ads",
-          "footer  footer"
-        ]}
-        minRowHeight="500px"
-      >
-        <Cell area="header">
-          <DateRangePicker
-            startDate={this.state.startDate} ///{this.state.startDate} // momentPropTypes.momentObj or null,
-            startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
-            endDate={this.state.endDate} //{this.state.endDate} // momentPropTypes.momentObj or null,
-            endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
-            onDatesChange={this.onDatesChange} // PropTypes.func.isRequired,
-            focusedInput={this.state.focusedInput} //{this.state.focusedInput}//{this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
-            onFocusChange={this.onFocusChange} // PropTypes.func.isRequired,
-            isOutsideRange={day => false}
-          />
-        </Cell>
-        <Cell area="content">
-          <Map
-            mapCenterChange={this.mapCenterChange}
-            mapCenter={this.state.mapCenter}
-            businesses={this.state.businesses}
-            businessSelected={this.businessSelected}
-            selectedBusiness={this.state.selectedBusiness}
-          />
-        </Cell>
+      <div>
+        <div className="row">
+          <div className="col-sm-12">
+            <DateRangePicker
+              startDate={this.state.startDate} ///{this.state.startDate} // momentPropTypes.momentObj or null,
+              startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
+              endDate={this.state.endDate} //{this.state.endDate} // momentPropTypes.momentObj or null,
+              endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
+              onDatesChange={this.onDatesChange} // PropTypes.func.isRequired,
+              focusedInput={this.state.focusedInput} //{this.state.focusedInput}//{this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
+              onFocusChange={this.onFocusChange} // PropTypes.func.isRequired,
+              isOutsideRange={day => false}
+            />
+          </div>
+        </div>
+        <div className="row" style={{ height: "500px" }}>
+          <div className="col-sm-7">
+            <Map
+              mapCenterChange={this.mapCenterChange}
+              mapCenter={this.state.mapCenter}
+              businesses={this.state.businesses}
+              businessSelected={this.businessSelected}
+              selectedBusiness={this.state.selectedBusiness}
+            />
+          </div>
+          <div className="col-sm-5">
+            <ReviewSummary
+              business={this.state.selectedBusiness}
+              reviews={this.state.reviews}
+              startDate={
+                this.state.startDate &&
+                this.state.startDate.format("YYYY-MM-DD")
+              }
+              endDate={
+                this.state.endDate && this.state.endDate.format("YYYY-MM-DD")
+              }
+            />
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-sm-7">
+            <BusinessSummary
+              businesses={this.state.businesses}
+              starsData={this.state.starsData}
+            />
+          </div>
 
-        <Cell area="ads">
-          <ReviewSummary
-            business={this.state.selectedBusiness}
-            reviews={this.state.reviews}
-          />
-        </Cell>
-        <Cell area="footer">
-          <BusinessSummary businesses={this.state.businesses} />
-        </Cell>
-      </Grid>
+          <div className="col-sm-5">
+            <CategorySummary categoryData={this.state.categoryData} />
+          </div>
+        </div>
+      </div>
     );
   }
 }
