@@ -5,7 +5,7 @@ import BusinessInfo from "./BusinessInfo";
 import { AutoSizer } from "react-virtualized";
 import mapboxgl from "mapbox-gl";
 
-mapboxgl.accessToken = "pk.eyJ1IjoibHlvbndqIiwiYSI6ImNqaGpibjJtbzJjYW8zMHAzbHcxaDVkdnkifQ.QGtbyddo45qxpdrxFQBPpw";
+mapboxgl.accessToken = "pk.eyJ1IjoibHlvbndqIiwiYSI6ImNqaGpudmF6ZjJrNWkzMHFvcXNjdTI3ajkifQ.oZJOYFFiwPzYLu6QyERv7g";
 
 class Map extends Component {
 
@@ -86,7 +86,7 @@ class Map extends Component {
     
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
-      style: 'mapbox://styles/mapbox/streets-v10',
+      style: 'mapbox://styles/mapbox/streets-v9',
       center: [lng, lat],
       zoom
     })

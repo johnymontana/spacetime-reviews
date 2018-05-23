@@ -1,13 +1,16 @@
 import React, { Component } from "react";
-import { ResponsivePie } from "nivo";
+import { Pie } from "nivo";
 import { AutoSizer } from "react-virtualized";
 
 class CategorySummary extends Component {
   render() {
     return (
-      <ResponsivePie
-        height={400}
-        //width={width}
+        <AutoSizer>
+            {({ height, width }) => (
+                
+      <Pie
+        height={height}
+        width={width}
         data={this.props.categoryData}
         margin={{
           top: 10,
@@ -47,6 +50,8 @@ class CategorySummary extends Component {
           }
         ]}
       />
+    )}
+    </AutoSizer>
     );
   }
 }

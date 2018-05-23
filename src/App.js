@@ -35,7 +35,8 @@ class App extends Component {
       //"bolt://localhost:7687",
       //neo4j.auth.basic("neo4j", "letmein")
       "bolt://reviews.lyonwj.com:17687",
-      neo4j.auth.basic("reviews", "letmein"), {encrypted: true}
+      neo4j.auth.basic("reviews", "letmein"),
+      { encrypted: true }
     );
     this.fetchBusinesses();
     this.fetchCategories();
@@ -240,35 +241,142 @@ class App extends Component {
     }
   };
 
+  handleSubmit = () => {};
+
   render() {
     return (
-      <div>
-        <div className="row">
-          <div className="col-sm-12">
-            <DateRangePicker
-              startDate={this.state.startDate} ///{this.state.startDate} // momentPropTypes.momentObj or null,
-              startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
-              endDate={this.state.endDate} //{this.state.endDate} // momentPropTypes.momentObj or null,
-              endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
-              onDatesChange={this.onDatesChange} // PropTypes.func.isRequired,
-              focusedInput={this.state.focusedInput} //{this.state.focusedInput}//{this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
-              onFocusChange={this.onFocusChange} // PropTypes.func.isRequired,
-              isOutsideRange={day => false}
-            />
+      <div id="app-wrapper">
+        <div id="app-toolbar">
+          <form action="" onSubmit={this.handleSubmit} method="post">
+            <div className="row tools">
+              <div className="col-sm-2">
+                <div className="tool radius">
+                  <h5>Query Radius</h5>
+                  <input
+                    type="number"
+                    id="radius-value"
+                    className="form-control"
+                    value=""
+                  />
+                  <select className="form-control" id="radius-suffix">
+                    <option />
+                    <option value="mi">mi</option>
+                    <option value="km">km</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="col-sm-2">
+                <div className="tool coordinates">
+                  <h5>Latitude</h5>
+                  <input
+                    type="number"
+                    step="any"
+                    id="coordinates-lat"
+                    className="form-control"
+                    placeholder="Latitude"
+                  />
+                </div>
+              </div>
+
+              <div className="col-sm-2">
+                <div className="tool coordinates">
+                  <h5>Longitude</h5>
+                  <input
+                    type="number"
+                    step="any"
+                    id="coordinates-lng"
+                    className="form-control"
+                    placeholder="Longitude"
+                  />
+                </div>
+              </div>
+
+              <div className="col-sm-2">
+                <div className="tool timeframe">
+                  <h5>Start time</h5>
+                  <input
+                    type="date"
+                    id="timeframe-start"
+                    className="form-control"
+                    placeholder="mm/dd/yyyy"
+                  />
+                </div>
+              </div>
+
+              <div className="col-sm-2">
+                <div className="tool timeframe">
+                  <h5>End time</h5>
+                  <input
+                    type="date"
+                    id="timeframe-end"
+                    className="form-control"
+                    placeholder="mm/dd/yyyy"
+                  />
+                </div>
+              </div>
+
+              <div className="col-sm-2">
+                <div className="tool">
+                  <h5>SpaceTime Reviews</h5>
+                  <button id="refresh" className="btn btn-primary btn-block">
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div id="app-maparea">
+          <Map
+            mapCenterChange={this.mapCenterChange}
+            mapCenter={this.state.mapCenter}
+            businesses={this.state.businesses}
+            businessSelected={this.businessSelected}
+            selectedBusiness={this.state.selectedBusiness}
+          />
+        </div>
+
+        <div id="app-sidebar">
+          <div className="chart-wrapper">
+            <div className="chart-title">Cell Title</div>
+            <div className="chart-stage">
+              <DateRangePicker
+                startDate={this.state.startDate} ///{this.state.startDate} // momentPropTypes.momentObj or null,
+                startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
+                endDate={this.state.endDate} //{this.state.endDate} // momentPropTypes.momentObj or null,
+                endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
+                onDatesChange={this.onDatesChange} // PropTypes.func.isRequired,
+                focusedInput={this.state.focusedInput} //{this.state.focusedInput}//{this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
+                onFocusChange={this.onFocusChange} // PropTypes.func.isRequired,
+                isOutsideRange={day => false}
+              />
+            </div>
+            <div className="chart-notes">Notes about this chart</div>
+          </div>
+          <br />
+          <div id="chart-02">
+            <div className="chart-wrapper">
+              <div className="chart-title">Business Summary</div>
+              <div className="chart-stage">
+                <BusinessSummary
+                  businesses={this.state.businesses}
+                  starsData={this.state.starsData}
+                />
+              </div>
+            </div>
+          </div>
+          <br />
+          <div id="chart-03">
+            <div className="chart-wrapper">
+              <div className="chart-title">Category Summary</div>
+              <div className="chart-stage">
+                <CategorySummary categoryData={this.state.categoryData} />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="row" style={{ height: "500px" }}>
-          <div className="col-sm-7">
-            <Map
-              mapCenterChange={this.mapCenterChange}
-              mapCenter={this.state.mapCenter}
-              businesses={this.state.businesses}
-              businessSelected={this.businessSelected}
-              selectedBusiness={this.state.selectedBusiness}
-            />
-          </div>
-          <div className="col-sm-5">
-            {/* <ReviewSummary
+        {/* <ReviewSummary
               business={this.state.selectedBusiness}
               reviews={this.state.reviews}
               startDate={
@@ -279,20 +387,6 @@ class App extends Component {
                 this.state.endDate && this.state.endDate.format("YYYY-MM-DD")
               }
             /> */}
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-sm-7">
-            <BusinessSummary
-              businesses={this.state.businesses}
-              starsData={this.state.starsData}
-            />
-          </div>
-
-          <div className="col-sm-5">
-            <CategorySummary categoryData={this.state.categoryData} />
-          </div>
-        </div>
       </div>
     );
   }

@@ -1,13 +1,16 @@
 import React, { Component } from "react";
-import { ResponsiveBar } from "nivo";
+import { Bar } from "nivo";
 import { AutoSizer } from "react-virtualized";
 
 class BusinessSummary extends Component {
   render() {
     return (
-      <ResponsiveBar
-        width={800}
-        height={400}
+      
+      <AutoSizer>
+            {({ height, width }) => (
+      <Bar
+        height={height}
+        width={width}
         data={this.props.starsData}
         keys={["count"]}
         indexBy="stars"
@@ -102,6 +105,8 @@ class BusinessSummary extends Component {
           }
         }}
       />
+      )}
+      </AutoSizer>
     );
   }
 }
