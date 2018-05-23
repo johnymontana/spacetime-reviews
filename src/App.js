@@ -268,7 +268,7 @@ class App extends Component {
             />
           </div>
           <div className="col-sm-5">
-            <ReviewSummary
+            {/* <ReviewSummary
               business={this.state.selectedBusiness}
               reviews={this.state.reviews}
               startDate={
@@ -278,7 +278,7 @@ class App extends Component {
               endDate={
                 this.state.endDate && this.state.endDate.format("YYYY-MM-DD")
               }
-            />
+            /> */}
           </div>
         </div>
         <div className="row">
