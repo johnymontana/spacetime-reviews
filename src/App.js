@@ -89,11 +89,10 @@ class App extends Component {
       .run(
         `MATCH (b:Business)<-[:REVIEWS]-(r:Review)
         WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < ($radius * 1000)
-        WITH r,b LIMIT 1000
         WITH DISTINCT b
-    OPTIONAL MATCH (b)-[:IN_CATEGORY]->(c:Category)
-    WITH c.name AS cat, COUNT(b) AS num ORDER BY num DESC LIMIT 25
-    RETURN COLLECT({id: cat, label: cat, value: toFloat(num)}) AS categoryData
+        OPTIONAL MATCH (b)-[:IN_CATEGORY]->(c:Category)
+        WITH c.name AS cat, COUNT(b) AS num ORDER BY num DESC LIMIT 25
+        RETURN COLLECT({id: cat, label: cat, value: toFloat(num)}) AS categoryData
     `,
         {
           lat: mapCenter.latitude,
@@ -129,7 +128,6 @@ class App extends Component {
         `
         MATCH (b:Business)<-[:REVIEWS]-(r:Review)
         WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < ( $radius * 1000)
-        WITH r,b LIMIT 1000
         OPTIONAL MATCH (b)-[:IN_CATEGORY]->(c:Category)
         WITH r,b, COLLECT(c.name) AS categories
         WITH COLLECT(DISTINCT b {.*, categories}) AS businesses, COLLECT(DISTINCT r) AS reviews
@@ -178,7 +176,6 @@ class App extends Component {
         `
           MATCH (b:Business)<-[:REVIEWS]-(r:Review)
           WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < ( $radius * 1000)
-          WITH r,b LIMIT 1000
           WITH r
           WITH r.date as date, COUNT(*) AS num ORDER BY date
            WITH date.year + "-" + date.month + "-" + date.day AS reviewDate, num
