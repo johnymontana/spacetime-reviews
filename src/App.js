@@ -293,6 +293,8 @@ class App extends Component {
                     type="number"
                     id="radius-value"
                     className="form-control"
+                    min="0.1"
+                    step="0.1"
                     value={this.state.mapCenter.radius}
                     onChange={this.radiusChange}
                   />
