@@ -371,7 +371,9 @@ class App extends Component {
             </div>
           </form>
         </div>
+        <div className="chart-wrapper">
         <div id="app-maparea">
+
           <Map
             mapCenterChange={this.mapCenterChange}
             mapCenter={this.state.mapCenter}
@@ -379,6 +381,7 @@ class App extends Component {
             businessSelected={this.businessSelected}
             selectedBusiness={this.state.selectedBusiness}
           />
+          </div>
         </div>
 
         <div id="app-sidebar">
@@ -401,14 +404,14 @@ class App extends Component {
           <br />
           <div id="chart-02">
             <div className="chart-wrapper">
-              <div className="chart-title">Business Summary</div>
+              <div className="chart-title">Review Star Summary</div>
               <div className="chart-stage">
                 <BusinessSummary
                   businesses={this.state.businesses}
                   starsData={this.state.starsData}
                 />
               </div>
-              <div className="chart-notes">Notes about this chart</div>
+              <div className="chart-notes">Review stars for businesses in the selected radius and date range.</div>
             </div>
           </div>
           <br />
@@ -418,6 +421,7 @@ class App extends Component {
               <div className="chart-stage">
                 <CategorySummary categoryData={this.state.categoryData} />
               </div>
+              <div className="chart-notes">Business category breakdown for businesses in the selecte radius with reviews in the date range.</div>
             </div>
           </div>
         </div>

@@ -130,17 +130,11 @@ class Map extends Component {
     const marker = new mapboxgl.Marker({color: "red", zIndexOffset: 9999})
     .setLngLat([lng, lat])
     .addTo(this.map)
-    .setPopup(new mapboxgl.Popup().setText("Drag me to search for businessees with reviews!"))
+    .setPopup(new mapboxgl.Popup().setText("Drag me to search for businessees with reviews! Also, try changing the query radius and date range."))
     .setDraggable(true)
-    .on('dragend', onDragEnd);
-    //   icon: mapboxgl.marker.icon({
-    //     'marker-color': "ff8888'"
-    //   }),
-    //   draggable: true,
-    //   zIndexOffset: 9999
-    // });
-
-    marker.addTo(this.map);
+    .on('dragend', onDragEnd)
+    .addTo(this.map)
+    .togglePopup();
 
     this.map.on('move', () => {
       const {lng, lat} = this.map.getCenter();
