@@ -27,7 +27,8 @@ class App extends Component {
       mapCenter: {
         latitude: 33.33,
         longitude: -111.978,
-        zoom: 13
+        radius: 0.5,
+        zoom: 16
       }
     };
 
@@ -75,6 +76,7 @@ class App extends Component {
   mapCenterChange = viewport => {
     this.setState({
       mapCenter: {
+        ...this.state.mapCenter,
         latitude: viewport.latitude,
         longitude: viewport.longitude,
         zoom: viewport.zoom
@@ -89,7 +91,7 @@ class App extends Component {
     session
       .run(
         `MATCH (b:Business)<-[:REVIEWS]-(r:Review)
-        WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < 10000 * (2/$zoom)
+        WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < ($radius * 1000)
         WITH r,b LIMIT 1000
         WITH DISTINCT b
     OPTIONAL MATCH (b)-[:IN_CATEGORY]->(c:Category)
@@ -99,7 +101,7 @@ class App extends Component {
         {
           lat: mapCenter.latitude,
           lon: mapCenter.longitude,
-          zoom: mapCenter.zoom,
+          radius: mapCenter.radius,
           start: new Date(
             startDate.year(),
             startDate.month() + 1,
@@ -133,7 +135,7 @@ class App extends Component {
       .run(
         `
         MATCH (b:Business)<-[:REVIEWS]-(r:Review)
-        WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < 10000 * (2/$zoom)
+        WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < ( $radius * 1000)
         WITH r,b LIMIT 1000
         OPTIONAL MATCH (b)-[:IN_CATEGORY]->(c:Category)
         WITH r,b, COLLECT(c.name) AS categories
@@ -145,7 +147,7 @@ class App extends Component {
         {
           lat: mapCenter.latitude,
           lon: mapCenter.longitude,
-          zoom: mapCenter.zoom,
+          radius: mapCenter.radius,
           start: new Date(
             startDate.year(),
             startDate.month() + 1,
@@ -181,7 +183,7 @@ class App extends Component {
       .run(
         `
           MATCH (b:Business)<-[:REVIEWS]-(r:Review)
-          WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < 10000 * (2/$zoom)
+          WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < ( $radius * 1000)
           WITH r,b LIMIT 1000
           WITH r
           WITH r.date as date, COUNT(*) AS num ORDER BY date
@@ -193,7 +195,7 @@ class App extends Component {
         {
           lat: mapCenter.latitude,
           lon: mapCenter.longitude,
-          zoom: mapCenter.zoom,
+          radius: mapCenter.radius,
           start: new Date(
             startDate.year(),
             startDate.month() + 1,
@@ -243,11 +245,46 @@ class App extends Component {
 
   handleSubmit = () => {};
 
+  radiusChange = (e) => {
+    this.setState({
+      mapCenter: {
+        ...this.state.mapCenter,
+        radius: Number(e.target.value)
+      }
+    }, () => {
+      this.fetchBusinesses();
+    this.fetchCategories();
+    this.fetchReviews();
+    })
+  }
+
+  dateChange = (e) => {
+    console.log(e.target.id);
+
+  if (e.target.id === "timeframe-start") {
+    this.setState({
+      startDate: moment(e.target.value)
+    }, () => {
+      this.fetchBusinesses();
+      this.fetchCategories();
+      this.fetchReviews();
+    })
+  } else if (e.target.id === "timeframe-end") {
+    this.setState({
+      endDate: moment(e.target.value)
+    }, () => {
+      this.fetchBusinesses();
+      this.fetchCategories();
+      this.fetchReviews();
+    })
+  }
+  }
+
   render() {
     return (
       <div id="app-wrapper">
         <div id="app-toolbar">
-          <form action="" onSubmit={this.handleSubmit} method="post">
+          <form action="" onSubmit={this.handleSubmit}>
             <div className="row tools">
               <div className="col-sm-2">
                 <div className="tool radius">
@@ -256,11 +293,10 @@ class App extends Component {
                     type="number"
                     id="radius-value"
                     className="form-control"
-                    value=""
+                    value={this.state.mapCenter.radius}
+                    onChange={this.radiusChange}
                   />
                   <select className="form-control" id="radius-suffix">
-                    <option />
-                    <option value="mi">mi</option>
                     <option value="km">km</option>
                   </select>
                 </div>
@@ -275,6 +311,7 @@ class App extends Component {
                     id="coordinates-lat"
                     className="form-control"
                     placeholder="Latitude"
+                    value={this.state.mapCenter.latitude}
                   />
                 </div>
               </div>
@@ -288,30 +325,35 @@ class App extends Component {
                     id="coordinates-lng"
                     className="form-control"
                     placeholder="Longitude"
+                    value={this.state.mapCenter.longitude}
                   />
                 </div>
               </div>
 
               <div className="col-sm-2">
                 <div className="tool timeframe">
-                  <h5>Start time</h5>
+                  <h5>Start Date</h5>
                   <input
                     type="date"
                     id="timeframe-start"
                     className="form-control"
                     placeholder="mm/dd/yyyy"
+                    value={this.state.startDate.format("YYYY-MM-DD")}
+                    onChange={this.dateChange}
                   />
                 </div>
               </div>
 
               <div className="col-sm-2">
                 <div className="tool timeframe">
-                  <h5>End time</h5>
+                  <h5>End Date</h5>
                   <input
                     type="date"
                     id="timeframe-end"
                     className="form-control"
                     placeholder="mm/dd/yyyy"
+                    value={this.state.endDate.format("YYYY-MM-DD")}
+                    onChange={this.dateChange}
                   />
                 </div>
               </div>
@@ -338,10 +380,10 @@ class App extends Component {
         </div>
 
         <div id="app-sidebar">
-          <div className="chart-wrapper">
+          {/* <div className="chart-wrapper">
             <div className="chart-title">Cell Title</div>
             <div className="chart-stage">
-              <DateRangePicker
+              {/* <DateRangePicker
                 startDate={this.state.startDate} ///{this.state.startDate} // momentPropTypes.momentObj or null,
                 startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
                 endDate={this.state.endDate} //{this.state.endDate} // momentPropTypes.momentObj or null,
@@ -350,10 +392,10 @@ class App extends Component {
                 focusedInput={this.state.focusedInput} //{this.state.focusedInput}//{this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
                 onFocusChange={this.onFocusChange} // PropTypes.func.isRequired,
                 isOutsideRange={day => false}
-              />
+              /> 
             </div>
             <div className="chart-notes">Notes about this chart</div>
-          </div>
+          </div> */}
           <br />
           <div id="chart-02">
             <div className="chart-wrapper">
@@ -364,6 +406,7 @@ class App extends Component {
                   starsData={this.state.starsData}
                 />
               </div>
+              <div className="chart-notes">Notes about this chart</div>
             </div>
           </div>
           <br />

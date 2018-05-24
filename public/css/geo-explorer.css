@@ -50,10 +50,10 @@ body.application {
   }
 
   .chart-wrapper {
-      min-height: 200px;
+      min-height: 400px;
   }
   .chart-stage {
-      min-height: 200px;
+      min-height: 400px;
   }
   
   #app-sidebar .chart-wrapper {

@@ -79,6 +79,10 @@ class Map extends Component {
 
   componentDidUpdate() {
     this.setBusinessMarkers();
+    if (this.mapLoaded) {
+      this.map.getSource("polygon").setData(this.createGeoJSONCircle([this.props.mapCenter.longitude, this.props.mapCenter.latitude], this.props.mapCenter.radius).data);
+    }
+
   }
 
   componentDidMount() {
@@ -92,7 +96,8 @@ class Map extends Component {
     })
 
     this.map.on('load', () => {
-      this.map.addSource("polygon", this.createGeoJSONCircle([lng, lat], 10 * (2/this.map.getZoom())))
+      this.mapLoaded = true;
+      this.map.addSource("polygon", this.createGeoJSONCircle([lng, lat], this.props.mapCenter.radius))
       this.map.addLayer({
         "id": "polygon",
         "type": "fill",
@@ -118,7 +123,7 @@ class Map extends Component {
       }
       this.props.mapCenterChange(viewport);
 
-      this.map.getSource("polygon").setData(this.createGeoJSONCircle([lngLat.lng, lngLat.lat], 10*(2/this.map.getZoom())).data);
+      this.map.getSource("polygon").setData(this.createGeoJSONCircle([lngLat.lng, lngLat.lat], this.props.mapCenter.radius).data);
 
       
     }

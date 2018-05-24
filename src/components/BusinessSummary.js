@@ -15,10 +15,10 @@ class BusinessSummary extends Component {
         keys={["count"]}
         indexBy="stars"
         margin={{
-          top: 50,
-          right: 130,
-          bottom: 50,
-          left: 60
+          top: 25,
+          right: 25,
+          bottom: 25,
+          left: 40
         }}
         padding={0.3}
         colors="nivo"

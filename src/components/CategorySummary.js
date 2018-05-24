@@ -13,10 +13,10 @@ class CategorySummary extends Component {
         width={width}
         data={this.props.categoryData}
         margin={{
-          top: 10,
-          right: 10,
-          bottom: 10,
-          left: 10
+          top: 75,
+          right: 75,
+          bottom: 75,
+          left: 75
         }}
         innerRadius={0.5}
         padAngle={0.7}
@@ -43,7 +43,7 @@ class CategorySummary extends Component {
             anchor: "bottom",
             direction: "row",
             translateY: 56,
-            itemWidth: 100,
+            itemWidth: 75,
             itemHeight: 14,
             symbolSize: 14,
             symbolShape: "circle"
