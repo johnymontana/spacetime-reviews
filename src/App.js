@@ -1,11 +1,8 @@
 import React, { Component } from "react";
 import "./App.css";
-import { Grid, Cell } from "styled-css-grid";
 import Map from "./components/Map";
-import ReviewSummary from "./components/ReviewSummary";
 import BusinessSummary from "./components/BusinessSummary";
 import CategorySummary from "./components/CategorySummary";
-import { DateRangePicker } from "react-dates";
 import neo4j from "neo4j-driver/lib/browser/neo4j-web";
 import { Date } from "neo4j-driver/lib/v1/temporal-types";
 import moment from "moment";
@@ -41,7 +38,7 @@ class App extends Component {
     );
     this.fetchBusinesses();
     this.fetchCategories();
-    this.fetchReviews();
+    //this.fetchReviews();
   }
 
   onDatesChange = ({ startDate, endDate }) => {
@@ -53,7 +50,7 @@ class App extends Component {
         },
         () => {
           this.fetchBusinesses();
-          this.fetchReviews();
+          //this.fetchReviews();
           this.fetchCategories();
         }
       );
@@ -111,8 +108,8 @@ class App extends Component {
         }
       )
       .then(result => {
+        console.log(result);
         const categoryData = result.records[0].get("categoryData");
-        console.log(categoryData);
         this.setState({
           categoryData
         });
@@ -125,10 +122,6 @@ class App extends Component {
   };
 
   fetchBusinesses = () => {
-    // Get businesses within range of center of map
-    // TODO: draw circle on map
-    // TODO: scale distance based on current map zoom
-
     const { mapCenter, startDate, endDate } = this.state;
     const session = this.driver.session();
     session
@@ -157,6 +150,7 @@ class App extends Component {
         }
       )
       .then(result => {
+        console.log(result);
         const record = result.records[0];
         const businesses = record.get("businesses");
         const starsData = record.get("starsData");
@@ -205,10 +199,8 @@ class App extends Component {
         }
       )
       .then(result => {
-        console.log("got some reviews");
         console.log(result);
         let reviews = result.records[0].get("reviewData");
-        console.log(reviews);
 
         this.setState({
           reviews
@@ -229,7 +221,7 @@ class App extends Component {
     ) {
       this.fetchBusinesses();
       this.fetchCategories();
-      this.fetchReviews();
+      //this.fetchReviews();
     }
     if (
       this.state.selectedBusiness &&
@@ -245,40 +237,47 @@ class App extends Component {
 
   handleSubmit = () => {};
 
-  radiusChange = (e) => {
-    this.setState({
-      mapCenter: {
-        ...this.state.mapCenter,
-        radius: Number(e.target.value)
+  radiusChange = e => {
+    this.setState(
+      {
+        mapCenter: {
+          ...this.state.mapCenter,
+          radius: Number(e.target.value)
+        }
+      },
+      () => {
+        this.fetchBusinesses();
+        this.fetchCategories();
+        //this.fetchReviews();
       }
-    }, () => {
-      this.fetchBusinesses();
-    this.fetchCategories();
-    this.fetchReviews();
-    })
-  }
+    );
+  };
 
-  dateChange = (e) => {
-    console.log(e.target.id);
-
-  if (e.target.id === "timeframe-start") {
-    this.setState({
-      startDate: moment(e.target.value)
-    }, () => {
-      this.fetchBusinesses();
-      this.fetchCategories();
-      this.fetchReviews();
-    })
-  } else if (e.target.id === "timeframe-end") {
-    this.setState({
-      endDate: moment(e.target.value)
-    }, () => {
-      this.fetchBusinesses();
-      this.fetchCategories();
-      this.fetchReviews();
-    })
-  }
-  }
+  dateChange = e => {
+    if (e.target.id === "timeframe-start") {
+      this.setState(
+        {
+          startDate: moment(e.target.value)
+        },
+        () => {
+          this.fetchBusinesses();
+          this.fetchCategories();
+          //this.fetchReviews();
+        }
+      );
+    } else if (e.target.id === "timeframe-end") {
+      this.setState(
+        {
+          endDate: moment(e.target.value)
+        },
+        () => {
+          this.fetchBusinesses();
+          this.fetchCategories();
+          // this.fetchReviews();
+        }
+      );
+    }
+  };
 
   render() {
     return (
@@ -372,35 +371,18 @@ class App extends Component {
           </form>
         </div>
         <div className="chart-wrapper">
-        <div id="app-maparea">
-
-          <Map
-            mapCenterChange={this.mapCenterChange}
-            mapCenter={this.state.mapCenter}
-            businesses={this.state.businesses}
-            businessSelected={this.businessSelected}
-            selectedBusiness={this.state.selectedBusiness}
-          />
+          <div id="app-maparea">
+            <Map
+              mapCenterChange={this.mapCenterChange}
+              mapCenter={this.state.mapCenter}
+              businesses={this.state.businesses}
+              businessSelected={this.businessSelected}
+              selectedBusiness={this.state.selectedBusiness}
+            />
           </div>
         </div>
 
         <div id="app-sidebar">
-          {/* <div className="chart-wrapper">
-            <div className="chart-title">Cell Title</div>
-            <div className="chart-stage">
-              {/* <DateRangePicker
-                startDate={this.state.startDate} ///{this.state.startDate} // momentPropTypes.momentObj or null,
-                startDateId="your_unique_start_date_id" // PropTypes.string.isRequired,
-                endDate={this.state.endDate} //{this.state.endDate} // momentPropTypes.momentObj or null,
-                endDateId="your_unique_end_date_id" // PropTypes.string.isRequired,
-                onDatesChange={this.onDatesChange} // PropTypes.func.isRequired,
-                focusedInput={this.state.focusedInput} //{this.state.focusedInput}//{this.state.focusedInput} // PropTypes.oneOf([START_DATE, END_DATE]) or null,
-                onFocusChange={this.onFocusChange} // PropTypes.func.isRequired,
-                isOutsideRange={day => false}
-              /> 
-            </div>
-            <div className="chart-notes">Notes about this chart</div>
-          </div> */}
           <br />
           <div id="chart-02">
             <div className="chart-wrapper">
@@ -411,7 +393,10 @@ class App extends Component {
                   starsData={this.state.starsData}
                 />
               </div>
-              <div className="chart-notes">Review stars for businesses in the selected radius and date range.</div>
+              <div className="chart-notes">
+                Review stars for businesses in the selected radius and date
+                range.
+              </div>
             </div>
           </div>
           <br />
@@ -421,21 +406,13 @@ class App extends Component {
               <div className="chart-stage">
                 <CategorySummary categoryData={this.state.categoryData} />
               </div>
-              <div className="chart-notes">Business category breakdown for businesses in the selecte radius with reviews in the date range.</div>
+              <div className="chart-notes">
+                Business category breakdown for businesses in the selecte radius
+                with reviews in the date range.
+              </div>
             </div>
           </div>
         </div>
-        {/* <ReviewSummary
-              business={this.state.selectedBusiness}
-              reviews={this.state.reviews}
-              startDate={
-                this.state.startDate &&
-                this.state.startDate.format("YYYY-MM-DD")
-              }
-              endDate={
-                this.state.endDate && this.state.endDate.format("YYYY-MM-DD")
-              }
-            /> */}
       </div>
     );
   }

@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { List, AutoSizer } from "react-virtualized";
-import { ResponsiveCalendar } from "nivo";
+import { Calendar } from "nivo";
 
 class ReviewSummary extends Component {
   shouldComponentUpdate(nextProps, nextState) {
@@ -41,10 +41,10 @@ class ReviewSummary extends Component {
     ];
 
     return (
-      <ResponsiveCalendar
+      <Calendar
         data={this.props.reviews}
         height={510}
-        //width={width}
+        width={400}
         from={this.props.startDate}
         to={this.props.endDate}
         emptyColor="#eeeeee"
