@@ -30,15 +30,15 @@ class App extends Component {
     };
 
     this.driver = neo4j.driver(
-      //"bolt://localhost:7687",
-      //neo4j.auth.basic("neo4j", "letmein")
-      "bolt://reviews.lyonwj.com:17687",
-      neo4j.auth.basic("reviews", "letmein"),
+      process.env.REACT_APP_NEO4J_URI,
+      neo4j.auth.basic(
+        process.env.REACT_APP_NEO4J_USER,
+        process.env.REACT_APP_NEO4J_PASSWORD
+      ),
       { encrypted: true }
     );
     this.fetchBusinesses();
     this.fetchCategories();
-    //this.fetchReviews();
   }
 
   onDatesChange = ({ startDate, endDate }) => {
@@ -50,7 +50,6 @@ class App extends Component {
         },
         () => {
           this.fetchBusinesses();
-          //this.fetchReviews();
           this.fetchCategories();
         }
       );
@@ -166,51 +165,6 @@ class App extends Component {
       });
   };
 
-  fetchReviews = () => {
-    const { startDate, endDate, mapCenter } = this.state;
-
-    const session = this.driver.session();
-
-    session
-      .run(
-        `
-          MATCH (b:Business)<-[:REVIEWS]-(r:Review)
-          WHERE $start <= r.date <= $end AND distance(b.location, point({latitude: $lat, longitude: $lon})) < ( $radius * 1000)
-          WITH r
-          WITH r.date as date, COUNT(*) AS num ORDER BY date
-           WITH date.year + "-" + date.month + "-" + date.day AS reviewDate, num
-          RETURN COLLECT({day: reviewDate, value: toFloat(num)}) AS reviewData
-          
-        
-          `,
-        {
-          lat: mapCenter.latitude,
-          lon: mapCenter.longitude,
-          radius: mapCenter.radius,
-          start: new Date(
-            startDate.year(),
-            startDate.month() + 1,
-            startDate.date()
-          ),
-          end: new Date(endDate.year(), endDate.month() + 1, endDate.date())
-        }
-      )
-      .then(result => {
-        console.log(result);
-        let reviews = result.records[0].get("reviewData");
-
-        this.setState({
-          reviews
-        });
-
-        session.close();
-      })
-      .catch(e => {
-        console.log(e);
-        session.close();
-      });
-  };
-
   componentDidUpdate = (prevProps, prevState) => {
     if (
       this.state.mapCenter.latitude !== prevState.mapCenter.latitude ||
@@ -218,7 +172,6 @@ class App extends Component {
     ) {
       this.fetchBusinesses();
       this.fetchCategories();
-      //this.fetchReviews();
     }
     if (
       this.state.selectedBusiness &&
@@ -227,8 +180,6 @@ class App extends Component {
         false ||
         false)
     ) {
-      // business is selected
-      // TODO: fetch related businesses
     }
   };
 
@@ -245,7 +196,6 @@ class App extends Component {
       () => {
         this.fetchBusinesses();
         this.fetchCategories();
-        //this.fetchReviews();
       }
     );
   };
@@ -259,7 +209,6 @@ class App extends Component {
         () => {
           this.fetchBusinesses();
           this.fetchCategories();
-          //this.fetchReviews();
         }
       );
     } else if (e.target.id === "timeframe-end") {
@@ -270,7 +219,6 @@ class App extends Component {
         () => {
           this.fetchBusinesses();
           this.fetchCategories();
-          // this.fetchReviews();
         }
       );
     }
@@ -404,8 +352,8 @@ class App extends Component {
                 <CategorySummary categoryData={this.state.categoryData} />
               </div>
               <div className="chart-notes">
-                Business category breakdown for businesses in the selecte radius
-                with reviews in the date range.
+                Business category breakdown for businesses in the selected
+                radius with reviews in the date range.
               </div>
             </div>
           </div>
