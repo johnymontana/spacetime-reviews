@@ -25,7 +25,7 @@ these can be added to `.env`
 Clone this git repo, and then
 
 ```
-npm intall
+npm install
 npm start
 ```
 
