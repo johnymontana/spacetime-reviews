@@ -258,6 +258,7 @@ class App extends Component {
                     className="form-control"
                     placeholder="Latitude"
                     value={this.state.mapCenter.latitude}
+                    onChange={()=>(true)}
                   />
                 </div>
               </div>
@@ -272,6 +273,7 @@ class App extends Component {
                     className="form-control"
                     placeholder="Longitude"
                     value={this.state.mapCenter.longitude}
+                    onChange={()=>true}
                   />
                 </div>
               </div>
