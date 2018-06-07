@@ -2,10 +2,10 @@
 
 A React app to demonstrate how to use the spatial and temporal functionality introduced in Neo4j 3.4. It makes use of:
 
-* create-react-app
-* neo4j-javascript-driver
-* Mapbox GL JS
-* Nivo charts
+* [create-react-app](https://github.com/facebook/create-react-app)
+* [neo4j-javascript-driver](https://github.com/neo4j/neo4j-javascript-driver)
+* [Mapbox GL JS](https://www.mapbox.com/mapbox-gl-js/api/)
+* [Nivo charts](http://nivo.rocks/)
 
 ![](img/screenshot.png)
 
@@ -25,7 +25,7 @@ these can be added to `.env`
 Clone this git repo, and then
 
 ```
-npm intall
+npm install
 npm start
 ```
 
