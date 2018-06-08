@@ -310,6 +310,7 @@ class App extends Component {
               <div className="col-sm-2">
                 <div className="tool">
                   <h5>SpaceTime Reviews</h5>
+                  <span>Data from <a href="https://www.yelp.com/dataset">Yelp Open Dataset</a></span>
                   <button id="refresh" className="btn btn-primary btn-block">
                     Refresh
                   </button>
