@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Bar } from "nivo";
 import { AutoSizer } from "react-virtualized";
 
-class BusinessSummary extends Component {
+class ReviewSummary extends Component {
   render() {
     return (
       
@@ -111,4 +111,4 @@ class BusinessSummary extends Component {
   }
 }
 
-export default BusinessSummary;
+export default ReviewSummary;

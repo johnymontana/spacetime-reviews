@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import "./App.css";
 import Map from "./components/Map";
-import BusinessSummary from "./components/BusinessSummary";
+import ReviewSummary from "./components/ReviewSummary";
 import CategorySummary from "./components/CategorySummary";
 import neo4j from "neo4j-driver/lib/browser/neo4j-web";
 import { Date } from "neo4j-driver/lib/v1/temporal-types";
@@ -337,7 +337,7 @@ class App extends Component {
             <div className="chart-wrapper">
               <div className="chart-title">Review Star Summary</div>
               <div className="chart-stage">
-                <BusinessSummary
+                <ReviewSummary
                   businesses={this.state.businesses}
                   starsData={this.state.starsData}
                 />
