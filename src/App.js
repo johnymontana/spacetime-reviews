@@ -69,7 +69,7 @@ class App extends Component {
     });
   };
 
-  mapCenterChange = viewport => {
+  mapSearchPointChange = viewport => {
     this.setState({
       mapCenter: {
         ...this.state.mapCenter,
@@ -322,7 +322,7 @@ class App extends Component {
         <div className="chart-wrapper">
           <div id="app-maparea">
             <Map
-              mapCenterChange={this.mapCenterChange}
+              mapSearchPointChange={this.mapSearchPointChange}
               mapCenter={this.state.mapCenter}
               businesses={this.state.businesses}
               businessSelected={this.businessSelected}

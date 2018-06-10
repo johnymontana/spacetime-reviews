@@ -141,7 +141,7 @@ class Map extends Component {
         longitude: lngLat.lng,
         zoom: this.map.getZoom()
       };
-      this.props.mapCenterChange(viewport);
+      this.props.mapSearchPointChange(viewport);
 
       this.map
         .getSource("polygon")
